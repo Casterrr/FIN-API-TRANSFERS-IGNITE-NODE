@@ -1,6 +1,7 @@
 
 
 import { AppError } from '../../../../shared/errors/AppError';
+import { User } from '../../entities/User';
 // import { CreateUserError } from './CreateUserError';
 import { InMemoryUsersRepository } from '../../repositories/in-memory/InMemoryUsersRepository';
 import { CreateUserUseCase } from './CreateUserUseCase';
@@ -31,6 +32,7 @@ describe("Create User", () => {
     const userFound = await inMemoryUsersRepository.findByEmail(user.email)
 
     expect(userFound).toHaveProperty("id")
+    expect(userFound).toBeInstanceOf(User)
   });
 
   it("Should not be able to create a user that already exists", async () => {

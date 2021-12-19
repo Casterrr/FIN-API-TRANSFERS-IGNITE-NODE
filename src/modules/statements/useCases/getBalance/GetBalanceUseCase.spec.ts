@@ -1,37 +1,42 @@
 import { InMemoryUsersRepository } from "../../../users/repositories/in-memory/InMemoryUsersRepository";
-import { StatementsRepository } from "../../repositories/StatementsRepository";
+import { CreateUserUseCase } from "../../../users/useCases/createUser/CreateUserUseCase";
+import { ICreateUserDTO } from "../../../users/useCases/createUser/ICreateUserDTO";
+import { InMemoryStatementsRepository } from "../../repositories/in-memory/InMemoryStatementsRepository";
 import { GetBalanceUseCase } from "./GetBalanceUseCase";
+
+import { GetBalanceError } from "./GetBalanceError";
 
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let getBalanceUseCase: GetBalanceUseCase;
-let statementsRepository: StatementsRepository;
-// let createUserUseCase: CreateUserUseCase;
+let inMemoryStatementsRepository: InMemoryStatementsRepository;
+let createUserUseCase: CreateUserUseCase;
 
 describe("Get user balance", () => {
   beforeEach(() => {
     inMemoryUsersRepository = new InMemoryUsersRepository();
-    statementsRepository = new StatementsRepository();
-    getBalanceUseCase = new GetBalanceUseCase(statementsRepository, inMemoryUsersRepository);
-    // createUserUseCase = new CreateUserUseCase(inMemoryUsersRepository);
+    inMemoryStatementsRepository = new InMemoryStatementsRepository();
+    getBalanceUseCase = new GetBalanceUseCase(inMemoryStatementsRepository, inMemoryUsersRepository);
+    createUserUseCase = new CreateUserUseCase(inMemoryUsersRepository);
   })
 
   it("Should be able to show user balances", async () => {
-    const user = await inMemoryUsersRepository.create({
-      name: "Lucas Matheus",
-      email: "lucas@email.com",
-      password: "123456"
-    });
+    const user: ICreateUserDTO = {
+      name: "test",
+      email: "test@email.com",
+      password: "123"
+    };
 
-    const user_id = user.id as string
+    const created_user = await createUserUseCase.execute(user);
+    const result = await getBalanceUseCase.execute({user_id: created_user.id!});
 
-    console.log(user_id)
+    expect(result).toHaveProperty('statement');
+    expect(result).toHaveProperty('balance');
+  });
 
-    const userBalance = await getBalanceUseCase.execute({ user_id });
-
-    expect(userBalance).toHaveProperty("statement");
-    expect(userBalance).toHaveProperty("balance");
-
-    //ATENÇÃO, SE VOCÊ ESTÁ LENDO ESSE COMENTÁRIO É POR QUE NESSA VERSÃO DO PROJETO ESSE TESTE ESTÁ COM UM ERRO DE CONEXÃO COM DATABASE E FOI PRECISO MIGRAR DO WINDOWS PRO LINUX PRA USAR O POSTGRES
+  it("Should not be able to show a balance of a inexistent user", async () => {
+    expect(async () => {
+      const result = await getBalanceUseCase.execute({user_id: 'inexistent_user_id'});
+    }).rejects.toBeInstanceOf(GetBalanceError);
   });
 })

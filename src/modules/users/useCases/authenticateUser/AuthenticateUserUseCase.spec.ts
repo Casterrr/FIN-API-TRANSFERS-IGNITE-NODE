@@ -1,9 +1,9 @@
-import { AppError } from "../../../../shared/errors/AppError";
 import { InMemoryUsersRepository } from "../../repositories/in-memory/InMemoryUsersRepository";
 import { CreateUserUseCase } from "../createUser/CreateUserUseCase";
 import { ICreateUserDTO } from "../createUser/ICreateUserDTO";
 import { AuthenticateUserUseCase } from "./AuthenticateUserUseCase";
 import { IAuthenticateUserResponseDTO } from "./IAuthenticateUserResponseDTO";
+import { IncorrectEmailOrPasswordError } from "./IncorrectEmailOrPasswordError";
 
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
@@ -26,7 +26,7 @@ describe("Authenticate User", () => {
 
     await createUserUseCase.execute(user);
 
-    console.log(user)
+    // console.log(user)
 
     const result: IAuthenticateUserResponseDTO = await authenticateUserUseCase.execute({
       email: user.email,
@@ -42,6 +42,6 @@ describe("Authenticate User", () => {
             email: "false@email.com",
             password: "123456",
         });
-    }).rejects.toBeInstanceOf(AppError);
+    }).rejects.toBeInstanceOf(IncorrectEmailOrPasswordError);
   });
 })
