@@ -29,8 +29,6 @@ describe("Get User Balance", () => {
       password: "123456",
     });
 
-    // console.log(authenticatedUserResponse.body);
-
     const token = authenticatedUserResponse.body.token;
 
     const gotBalanceResponse = await request(app).get("/api/v1/statements/balance").send().set("Authorization", `Bearer ${token}`);

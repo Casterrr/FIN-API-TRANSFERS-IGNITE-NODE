@@ -33,8 +33,6 @@ describe("Show user profile", () => {
 
     const showProfileResponse = await request(app).get("/api/v1/profile").send().set("Authorization", `Bearer ${token}`);
 
-    console.log(showProfileResponse.body);
-
     expect(showProfileResponse.status).toBe(200);
     expect(showProfileResponse.body).toHaveProperty("id");
     expect(showProfileResponse.body).toHaveProperty("email");

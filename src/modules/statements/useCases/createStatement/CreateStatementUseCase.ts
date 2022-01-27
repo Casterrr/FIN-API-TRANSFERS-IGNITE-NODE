@@ -15,7 +15,7 @@ export class CreateStatementUseCase {
     private statementsRepository: IStatementsRepository
   ) {}
 
-  async execute({ user_id, type, amount, description }: ICreateStatementDTO) {
+  async execute({ user_id, type, amount, description, sender_id }: ICreateStatementDTO) {
     const user = await this.usersRepository.findById(user_id);
 
     if(!user) {
@@ -28,6 +28,47 @@ export class CreateStatementUseCase {
       if (balance < amount) {
         throw new CreateStatementError.InsufficientFunds()
       }
+    }
+
+    if (sender_id) {
+
+      if(type === 'transfer') {
+        const { balance } = await this.statementsRepository.getUserBalance({ user_id: sender_id});
+
+        if (balance < amount) {
+          throw new CreateStatementError.InsufficientFunds()
+        }
+      }
+
+      //Verifica se o remetente existe
+      const sender_user = await this.usersRepository.findById(sender_id!);
+
+      if (!sender_user) {
+        throw new CreateStatementError.UserNotFound();
+      }
+
+      //Verifica se o destinatário existe
+      const receiver_user = await this.usersRepository.findById(user_id);
+
+      if(!receiver_user) {
+        throw new CreateStatementError.UserNotFound();
+      }
+
+      //Verifica se o remetente e o destinatário são o mesmo usuário
+      if (sender_user.id === receiver_user.id) {
+        throw new CreateStatementError.UserCannotTransferToYourSelf();
+      }
+
+      const receiverUserStatementOperation = await this.statementsRepository.create({
+        user_id: sender_id,
+        type,
+        amount,
+        description,
+        sender_id: user_id
+      });
+
+      return receiverUserStatementOperation
+
     }
 
     const statementOperation = await this.statementsRepository.create({

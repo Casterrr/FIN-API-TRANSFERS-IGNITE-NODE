@@ -29,8 +29,6 @@ describe("Authenticate User", () => {
       password: "123456",
     });
 
-    console.log(response.body);
-
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("token");
     expect(response.body.user).toHaveProperty("id");

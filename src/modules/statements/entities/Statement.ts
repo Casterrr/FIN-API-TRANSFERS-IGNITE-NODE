@@ -13,6 +13,7 @@ import { User } from '../../users/entities/User';
 export enum OperationType {
   DEPOSIT = 'deposit',
   WITHDRAW = 'withdraw',
+  TRANSFER = 'transfer'
 }
 
 @Entity('statements')
@@ -41,6 +42,9 @@ export class Statement {
 
   @CreateDateColumn()
   updated_at: Date;
+
+  @Column('uuid', { nullable: true })
+  sender_id?: string;
 
   constructor() {
     if (!this.id) {

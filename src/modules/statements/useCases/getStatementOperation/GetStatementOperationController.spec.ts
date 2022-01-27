@@ -42,8 +42,6 @@ describe("Get Statement Operation", () => {
       Authorization: `Bearer ${token}`
     });
 
-    console.log(getStatementOperationResponse.body);
-
     expect(getStatementOperationResponse.status).toBe(200);
     expect(getStatementOperationResponse.body).toHaveProperty("id");
   });
@@ -87,8 +85,6 @@ describe("Get Statement Operation", () => {
       email: "marcos@email.com",
       password: "654321",
     });
-
-    console.log(authenticatedUserResponse.body);
 
     const token = authenticatedUserResponse.body.token;
 

@@ -26,8 +26,6 @@ describe("Authenticate User", () => {
 
     await createUserUseCase.execute(user);
 
-    // console.log(user)
-
     const result: IAuthenticateUserResponseDTO = await authenticateUserUseCase.execute({
       email: user.email,
       password: user.password

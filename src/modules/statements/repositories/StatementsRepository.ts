@@ -17,13 +17,15 @@ export class StatementsRepository implements IStatementsRepository {
     user_id,
     amount,
     description,
-    type
+    type,
+    sender_id
   }: ICreateStatementDTO): Promise<Statement> {
     const statement = this.repository.create({
       user_id,
       amount,
       description,
-      type
+      type,
+      sender_id
     });
 
     return this.repository.save(statement);
@@ -40,12 +42,20 @@ export class StatementsRepository implements IStatementsRepository {
       { balance: number } | { balance: number, statement: Statement[] }
     >
   {
+
+    // Pega todos os statements relacionados ao user_id passado no parâmetro dessa função transfer
+    // A Lógica é: Me retorne todos os statements cuja coluna user_id OU sender_id contenham o user_id passado
     const statement = await this.repository.find({
-      where: { user_id }
+      where: [
+        { user_id },
+        { sender_id: user_id }
+      ]
     });
 
+
     const balance = statement.reduce((acc, operation) => {
-      if (operation.type === 'deposit') {
+      // Caso seja do tipo transfer e o user_id do statement seja igual ao user_id passado na função, significa que o esse user_id passado na função quem recebeu uma transferência, logo, soma.
+      if (operation.type === 'deposit' || (operation.type === 'transfer' && operation.user_id === user_id)) {
         return acc + operation.amount;
       } else {
         return acc - operation.amount;

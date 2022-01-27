@@ -75,6 +75,51 @@ describe("Create statement", () => {
 
   });
 
+  it("Should be able to transfer", async () => {
+    //cria o remetente
+    const sender_user: ICreateUserDTO = {
+      name: "Ivara",
+      email: "ivara@email.com",
+      password: "123456"
+    };
+
+    const created_sender_user = await createUserUseCase.execute(sender_user);
+
+    //cria um depósito na conta do remetente
+    await createStatementUseCase.execute({
+      user_id: created_sender_user.id!,
+      type: OperationType.DEPOSIT,
+      amount: 100,
+      description: 'deposit'
+
+    });
+
+    //cria o destinatário
+    const receiver_user: ICreateUserDTO = {
+      name: "Saryn",
+      email: "saryn@email.com",
+      password: "123456"
+    };
+
+    const created_receiver_user = await createUserUseCase.execute(receiver_user);
+
+    //cria uma transferência na conta do destinatário, que vai ter um sender_id
+    const receiver_transfer_statement = await createStatementUseCase.execute({
+      user_id: created_receiver_user.id!,
+      type: OperationType.TRANSFER,
+      amount: 100,
+      description: 'transfer',
+      sender_id: created_sender_user.id!
+
+    });
+
+    expect(receiver_transfer_statement).toBeInstanceOf(Statement);
+    expect(receiver_transfer_statement).toHaveProperty('sender_id');
+    expect(receiver_transfer_statement.type).toBe(OperationType.TRANSFER);
+    expect(receiver_transfer_statement.amount).toBe(100);
+
+  });
+
   it("Should not be able to create a statement of a inexistent user", async () => {
     expect(async () => {
 
@@ -89,25 +134,82 @@ describe("Create statement", () => {
   });
 
   it("Should not be able to withdraw with insufficient funds", async () => {
-    expect(async () => {
-      const user: ICreateUserDTO = {
-        name: "Lucas Matheus",
-        email: "lucas@email.com",
-        password: "123456"
-      };
+    const user: ICreateUserDTO = {
+      name: "Lucas Matheus",
+      email: "lucas@email.com",
+      password: "123456"
+    };
 
-      const created_user = await createUserUseCase.execute(user);
+    const created_user = await createUserUseCase.execute(user);
 
-      await createStatementUseCase.execute({
-        user_id: created_user.id!,
-        type: OperationType.WITHDRAW,
-        amount: 100,
-        description: 'withdraw'
+    expect(
+      createStatementUseCase.execute({
+      user_id: created_user.id!,
+      type: OperationType.WITHDRAW,
+      amount: 100,
+      description: 'withdraw'
 
-      });
-    }).rejects.toBeInstanceOf(CreateStatementError.InsufficientFunds);
+    })).rejects.toBeInstanceOf(CreateStatementError.InsufficientFunds);
   });
 
+  it("Should not be able to transfer with insufficient funds", async () => {
 
+    const sender_user: ICreateUserDTO = {
+      name: "Elizabeth",
+      email: "liza@email.com",
+      password: "123456"
+    };
 
+    const sender_created_user = await createUserUseCase.execute(sender_user);
+
+    const receiver_user: ICreateUserDTO = {
+      name: "Gilda",
+      email: "gilda@email.com",
+      password: "123456"
+    };
+
+    const receiver_created_user = await createUserUseCase.execute(receiver_user);
+
+    await expect(
+      createStatementUseCase.execute({
+      user_id: receiver_created_user.id!,
+      type: OperationType.TRANSFER,
+      amount: 100,
+      description: 'transfer',
+      sender_id: sender_created_user.id!
+
+    })).rejects.toBeInstanceOf(CreateStatementError.InsufficientFunds);
+
+  });
+
+  it("Should not be able to transfer to yourself", async () => {
+    //cria o destinatário
+    const receiver_user: ICreateUserDTO = {
+      name: "Saryn",
+      email: "saryn@email.com",
+      password: "123456"
+    };
+
+    const created_receiver_user = await createUserUseCase.execute(receiver_user);
+
+    await createStatementUseCase.execute({
+      user_id: created_receiver_user.id!,
+      type: OperationType.DEPOSIT,
+      amount: 100,
+      description: 'deposit'
+
+    });
+
+    await expect(
+      //cria uma transferência na conta do destinatário, que vai ter um sender_id
+      createStatementUseCase.execute({
+      user_id: created_receiver_user.id!,
+      type: OperationType.TRANSFER,
+      amount: 100,
+      description: 'transfer',
+      sender_id: created_receiver_user.id!
+
+      })).rejects.toBeInstanceOf(CreateStatementError.UserCannotTransferToYourSelf);
+
+  });
 })

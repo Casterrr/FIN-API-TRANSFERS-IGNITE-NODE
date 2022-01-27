@@ -13,7 +13,7 @@ export class CreateUserUseCase {
     private usersRepository: IUsersRepository,
   ) {}
 
-  async execute({ name, email, password }: ICreateUserDTO) {
+  async execute({ id, name, email, password }: ICreateUserDTO) {
     const userAlreadyExists = await this.usersRepository.findByEmail(email);
 
     if (userAlreadyExists) {
@@ -21,6 +21,17 @@ export class CreateUserUseCase {
     }
 
     const passwordHash = await hash(password, 8);
+
+    if (id) {
+      const user = await this.usersRepository.create({
+        id,
+        email,
+        name,
+        password: passwordHash,
+      });
+
+      return user;
+    }
 
     const user = await this.usersRepository.create({
       email,
